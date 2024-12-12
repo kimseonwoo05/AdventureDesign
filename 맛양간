@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>음식 설문조사</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: #fff;
+      padding: 2em;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      max-width: 500px;
+      width: 100%;
+    }
+
+    #foodSelectionList button {
+  width: 150px; /* 버튼 너비 고정 */
+  height: 200px; /* 버튼 높이 고정 */
+  margin: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  overflow: hidden; /* 내부 요소가 버튼 크기를 넘지 않도록 */
+}
+
+#foodSelectionList button img {
+  max-width: 100px; /* 이미지 최대 너비 */
+  max-height: 100px; /* 이미지 최대 높이 */
+  display: block;
+}
+
+#foodSelectionList button span {
+  margin-top: 10px;
+  font-size: 14px;
+  text-align: center;
+  font-weight: bold;
+  color: #333;
+}
+
+
+    #thankYouScreen, #results, #surveyForm, #foodSelection {
+      display: none;
+    }
+
+    .rating {
+      display: flex;
+      flex-direction: row-reverse;
+      justify-content: flex-start;
+      gap: 5px;
+      padding: 0.5em 0;
+    }
+
+    .rating label {
+      font-size: 24px;
+      color: #ddd;
+      cursor: pointer;
+    }
+
+    .rating input[type="radio"] {
+      display: none;
+    }
+
+    .rating input[type="radio"]:checked ~ label,
+    .rating label:hover,
+    .rating label:hover ~ label {
+      color: #f5c518;
+    }
+
+    .food-list img {
+  width: auto;
+  height: auto;
+  max-width: 100%; /* 화면을 넘어가지 않도록 최대 너비 제한 */
+  max-height: 120px; /* 적당한 높이 제한 */
+  margin: 0 auto; /* 중앙 정렬 */
+  display: block;
+}
+
+.food-list span {
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  display: block;
+  margin-top: 8px;
+}
+
+
+
+.timer {
+  display: none; /* 남은 시간 숨김 */
+}
+
+
+  </style>
+</head>
+<body>
+  <div id="startScreen" class="container">
+    <h2>음식 추가</h2>
+    <input type="text" id="foodName" placeholder="음식 이름" />
+    <input type="file" id="foodImage" accept="image/*" />
+    <button onclick="addFood()">음식 추가</button>
+    <h3>음식 목록</h3>
+    <div id="foodList"></div>
+    <h3>설문 시간 제한 설정 (분)</h3>
+    <input type="number" id="timerInput" placeholder="예: 60" />
+    <button onclick="startSurvey()">설문 시작</button>
+  </div>
+
+  <div id="foodSelection" class="container">
+    <h2>평가할 음식을 선택하세요</h2>
+    <div id="foodSelectionList"></div>
+    <div class="timer">남은 시간: <span id="remainingTime">0</span>초</div>
+  </div>
+
+  <form id="surveyForm" class="container">
+    <h2 id="foodNameDisplay"></h2>
+    <div>
+      <label>1. 맛은 어떠셨나요?</label>
+      <div class="rating">
+        <input type="radio" id="taste-5" name="taste" value="5"><label for="taste-5">★</label>
+        <input type="radio" id="taste-4" name="taste" value="4"><label for="taste-4">★</label>
+        <input type="radio" id="taste-3" name="taste" value="3"><label for="taste-3">★</label>
+        <input type="radio" id="taste-2" name="taste" value="2"><label for="taste-2">★</label>
+        <input type="radio" id="taste-1" name="taste" value="1"><label for="taste-1">★</label>
+      </div>
+    </div>
+    <br>
+    <div>
+      <label>2. 음식의 양은 적당했나요?</label>
+      <div class="rating">
+        <input type="radio" id="quantity-5" name="quantity" value="5"><label for="quantity-5">★</label>
+        <input type="radio" id="quantity-4" name="quantity" value="4"><label for="quantity-4">★</label>
+        <input type="radio" id="quantity-3" name="quantity" value="3"><label for="quantity-3">★</label>
+        <input type="radio" id="quantity-2" name="quantity" value="2"><label for="quantity-2">★</label>
+        <input type="radio" id="quantity-1" name="quantity" value="1"><label for="quantity-1">★</label>
+      </div>
+    </div>
+    <br>
+    <div>
+      <label>3. 간은 어떠셨나요?(별이 많을수록 짭니다.)</label>
+      <div class="rating">
+        <input type="radio" id="saltiness-5" name="saltiness" value="5"><label for="saltiness-5">★</label>
+        <input type="radio" id="saltiness-4" name="saltiness" value="4"><label for="saltiness-4">★</label>
+        <input type="radio" id="saltiness-3" name="saltiness" value="3"><label for="saltiness-3">★</label>
+        <input type="radio" id="saltiness-2" name="saltiness" value="2"><label for="saltiness-2">★</label>
+        <input type="radio" id="saltiness-1" name="saltiness" value="1"><label for="saltiness-1">★</label>
+      </div>
+    </div>
+  </form>
+  
+
+  <div id="thankYouScreen" class="container">
+    <h2>감사합니다!</h2>
+    <p>설문이 제출되었습니다.</p>
+  </div>
+
+  <div id="results" class="container">
+    <h2>음식별 설문 결과</h2>
+    <div id="ratingGraphs"></div>
+  </div>
+
+  <script>
+    let foods = [];
+    let evaluations = {};
+    let timerDuration = 0; // 타이머 지속 시간 (분)
+    let timerInterval;
+    let currentFoodIndex = 0;
+  
+    function addFood() {
+  const foodName = document.getElementById("foodName");
+  const foodImage = document.getElementById("foodImage");
+
+  if (!foodName.value || !foodImage.files[0]) {
+    alert("음식 이름과 이미지를 입력해주세요!");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function (event) {
+    foods.push({ name: foodName.value, image: event.target.result });
+    updateFoodList();
+    foodName.value = ""; // 음식 이름 입력 필드 리셋
+    foodImage.value = ""; // 이미지 파일 선택 리셋
+  };
+  reader.readAsDataURL(foodImage.files[0]);
+}
+
+  
+    function updateFoodList() {
+      const foodList = document.getElementById("foodList");
+      foodList.innerHTML = "";
+      foods.forEach((food, index) => {
+        const div = document.createElement("div");
+        div.classList.add("food-item");
+        div.innerHTML = 
+          `<img src="${food.image}" alt="${food.name}" width="50" height="50">
+          <span>${food.name}</span>`;
+        foodList.appendChild(div);
+      });
+    }
+  
+    function startSurvey() {
+  const timerInput = document.getElementById("timerInput").value;
+  timerDuration = parseInt(timerInput, 10) * 60;
+
+  if (isNaN(timerDuration) || timerDuration <= 0) {
+    alert("올바른 시간 제한을 입력하세요!");
+    return;
+  }
+
+  if (foods.length === 0) {
+    alert("음식을 추가하세요!");
+    return;
+  }
+
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("foodSelection").style.display = "block";
+
+  const foodSelectionList = document.getElementById("foodSelectionList");
+  foodSelectionList.innerHTML = "";
+
+  foods.forEach((food, index) => {
+    const button = document.createElement("button");
+    button.style.display = "inline-block";
+    button.style.margin = "15px";
+    button.style.textAlign = "center";
+
+    button.innerHTML = 
+      `<img src="${food.image}" alt="${food.name}">
+      <span>${food.name}</span>`;
+    button.onclick = () => startEvaluation(index);
+    foodSelectionList.appendChild(button);
+  });
+
+  startTimer();
+}
+
+
+  
+function startTimer() {
+  clearInterval(timerInterval); // 이전 타이머 초기화
+  let remainingTime = timerDuration; // 설정된 시간(초) 사용
+
+  timerInterval = setInterval(() => {
+    remainingTime -= 1;
+
+    if (remainingTime <= 0) {
+      clearInterval(timerInterval); // 타이머 중지
+      document.getElementById("foodSelection").style.display = "none"; // 음식 선택 화면 숨기기
+      document.getElementById("surveyForm").style.display = "none"; // 설문 폼 숨기기
+      document.getElementById("thankYouScreen").style.display = "none"; // 감사 화면 숨기기
+      showResults(); // 결과 화면만 표시
+    }
+  }, 1000);
+}
+  
+    function formatTime(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+    }
+  
+    function startEvaluation(index) {
+  currentFoodIndex = index;
+  const food = foods[index];
+  document.getElementById("foodSelection").style.display = "none";
+  document.getElementById("surveyForm").style.display = "block";
+  document.getElementById("foodNameDisplay").textContent = food.name;
+
+  // 설문 항목 선택 시마다 체크 상태 확인
+  const inputs = document.querySelectorAll("#surveyForm input[type='radio']");
+  inputs.forEach((input) => {
+    input.addEventListener("change", checkSurveyCompletion);
+  });
+}
+
+function checkSurveyCompletion() {
+  // 모든 설문 항목 체크 여부 확인
+  const taste = document.querySelector('input[name="taste"]:checked');
+  const quantity = document.querySelector('input[name="quantity"]:checked');
+  const saltiness = document.querySelector('input[name="saltiness"]:checked');
+
+  if (taste && quantity && saltiness) {
+    submitEvaluation(); // 모든 항목 선택 시 자동 제출
+  }
+}
+
+function submitEvaluation() {
+  const taste = document.querySelector('input[name="taste"]:checked').value;
+  const quantity = document.querySelector('input[name="quantity"]:checked').value;
+  const saltiness = document.querySelector('input[name="saltiness"]:checked').value;
+
+  if (!evaluations[foods[currentFoodIndex].name]) {
+    evaluations[foods[currentFoodIndex].name] = [];
+  }
+
+  evaluations[foods[currentFoodIndex].name].push({
+    taste: parseInt(taste),
+    quantity: parseInt(quantity),
+    saltiness: parseInt(saltiness),
+  });
+
+  resetRatings();
+  document.getElementById("surveyForm").style.display = "none";
+  document.getElementById("thankYouScreen").style.display = "block";
+
+  // 2초 후 음식 선택 화면으로 전환
+  setTimeout(() => {
+    document.getElementById("thankYouScreen").style.display = "none";
+    document.getElementById("foodSelection").style.display = "block";
+  }, 2000);
+}
+
+function resetRatings() {
+  const ratings = document.querySelectorAll("#surveyForm input[type='radio']");
+  ratings.forEach((rating) => (rating.checked = false)); // 모든 별점 체크 해제
+}
+
+
+function showResults() {
+  document.getElementById("foodSelection").style.display = "none";
+  document.getElementById("results").style.display = "block";
+
+  const ratingGraphs = document.getElementById("ratingGraphs");
+  ratingGraphs.innerHTML = "";
+
+  for (let foodName in evaluations) {
+    const foodRatings = evaluations[foodName];
+    const avgTaste = (
+      foodRatings.reduce((sum, r) => sum + r.taste, 0) / foodRatings.length
+    ).toFixed(2);
+    const avgQuantity = (
+      foodRatings.reduce((sum, r) => sum + r.quantity, 0) / foodRatings.length
+    ).toFixed(2);
+    const avgSaltiness = (
+      foodRatings.reduce((sum, r) => sum + r.saltiness, 0) / foodRatings.length
+    ).toFixed(2);
+
+    ratingGraphs.innerHTML += 
+      `<h3>${foodName}</h3>
+      <p>평균 맛 점수: ${avgTaste}</p>
+      <p>평균 양 점수: ${avgQuantity}</p>
+      <p>평균 간 점수: ${avgSaltiness}</p>`;
+  }
+}
+  </script>  
+</body>
+</html>
